@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\pacman.c-main"
   ],
-  "SelectedNode": "\\C:\\Users\\17207\\Desktop\\CS2080_final_project",
+  "SelectedNode": "\\pacman.c-main\\pacman.c",
   "PreviewInSolutionExplorer": false
 }
