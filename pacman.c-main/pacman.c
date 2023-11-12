@@ -7,6 +7,7 @@
     Test 5 Tommy Pham 
     test 6
     test 7 mike
+    test 9 Tommy
     A Pacman clone written in C99 using the sokol headers for platform
     abstraction.
 
