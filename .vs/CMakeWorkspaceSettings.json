@@ -1,0 +1,4 @@
+{
+  "enableCMake": true,
+  "sourceDirectory": "pacman.c-main"
+}
