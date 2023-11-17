@@ -2391,7 +2391,7 @@ static void intro_tick(void) {
 }
 
 /*== GFX SUBSYSTEM ===========================================================*/
-
+////////////////////////IMAGES AND PIXELING/////////////////////////////////////////
 /* create all sokol-gfx resources */
 static void gfx_create_resources(void) {
     // pass action for clearing the background to black
@@ -2726,7 +2726,7 @@ static void gfx_create_resources(void) {
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 }
-
+///////////////////////////////////GFX//////////////////////////////////////////////////
 /*
     8x4 tile decoder (taken from: https://github.com/floooh/chips/blob/master/systems/namco.h)
 
