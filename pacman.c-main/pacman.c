@@ -156,7 +156,7 @@
 #define DBG_MARKERS         (0)     // set to (1) to show debug markers
 #define DBG_ESCAPE          (0)     // set to (1) to leave game loop with Esc
 #define DBG_DOUBLE_SPEED    (0)     // set to (1) to speed up game (useful with godmode)
-#define DBG_GODMODE         (0)     // set to (1) to disable dying
+#define DBG_GODMODE         (1)     // set to (1) to disable dying
 
 // NOTE: DO NOT CHANGE THESE DEFINES TO AN ENUM
 // gcc-13 will turn the backing type into an unsigned integer which then
@@ -2335,7 +2335,8 @@ static void intro_tick(void) {
 
     // draw the animated 'ghost image.. name.. nickname' lines
     uint32_t delay = 30;
-    const char* names[] = { "-SHADOW", "-SPEEDY", "-BASHFUL", "-POKEY" };
+    //const char* names[] = { "-SHADOW", "-SPEEDY", "-BASHFUL", "-POKEY" };
+    const char* names[] = { "-TOMMY", "-TIMMY", "-TAMMY", "-BOB" };
     const char* nicknames[] = { "BLINKY", "PINKY", "INKY", "CLYDE" };
     for (int i = 0; i < 4; i++) {
         const uint8_t color = 2*i + 1;
