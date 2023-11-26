@@ -465,7 +465,8 @@ static struct {
         bool global_dot_counter_active;     // set to true when Pacman loses a life
         uint8_t global_dot_counter;         // the global dot counter for the ghost-house-logic
         ghost_t ghost[NUM_GHOSTS];
-        pacman_t pacman;
+        pacman_t pacman1;
+        pacman_t pacman2;
         fruit_t active_fruit;
     } game;
 
@@ -680,7 +681,9 @@ static const sound_desc_t snd_frightened = {
 static void init(void);
 static void frame(void);
 static void cleanup(void);
-static void input(const sapp_event*);
+static void input1(const sapp_event*);
+static void input2(const sapp_event*);
+
 
 static void start(trigger_t* t);
 static bool now(trigger_t t);
@@ -718,7 +721,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = input,
+        .event_cb = input1,
         .width = DISPLAY_TILES_X * TILE_WIDTH * 2,
         .height = DISPLAY_TILES_Y * TILE_HEIGHT * 2,
         .window_title = "pacman.c",
@@ -776,25 +779,21 @@ static void frame(void) {
     snd_frame(frame_time_ns);
 }
 
-static void input(const sapp_event* ev) {
+static void input1(const sapp_event* ev) {
     if (state.input.enabled) {
         if ((ev->type == SAPP_EVENTTYPE_KEY_DOWN) || (ev->type == SAPP_EVENTTYPE_KEY_UP)) {
             bool btn_down = ev->type == SAPP_EVENTTYPE_KEY_DOWN;
             switch (ev->key_code) {
                 case SAPP_KEYCODE_UP:
-                case SAPP_KEYCODE_W:
                     state.input.up = state.input.anykey = btn_down;
                     break;
                 case SAPP_KEYCODE_DOWN:
-                case SAPP_KEYCODE_S:
                     state.input.down = state.input.anykey = btn_down;
                     break;
                 case SAPP_KEYCODE_LEFT:
-                case SAPP_KEYCODE_A:
                     state.input.left = state.input.anykey = btn_down;
                     break;
                 case SAPP_KEYCODE_RIGHT:
-                case SAPP_KEYCODE_D:
                     state.input.right = state.input.anykey = btn_down;
                     break;
                 case SAPP_KEYCODE_ESCAPE:
@@ -807,6 +806,37 @@ static void input(const sapp_event* ev) {
         }
     }
 }
+static void input2(const sapp_event* ev) {
+    if (state.input.enabled) {
+        if ((ev->type == SAPP_EVENTTYPE_KEY_DOWN) || (ev->type == SAPP_EVENTTYPE_KEY_UP)) {
+            bool btn_down = ev->type == SAPP_EVENTTYPE_KEY_DOWN;
+            switch (ev->key_code) {
+            case SAPP_KEYCODE_W:
+                state.input.up = state.input.anykey = btn_down;
+                break;
+            case SAPP_KEYCODE_S:
+                state.input.down = state.input.anykey = btn_down;
+                break;
+            case SAPP_KEYCODE_A:
+                state.input.left = state.input.anykey = btn_down;
+                break;
+            case SAPP_KEYCODE_D:
+                state.input.right = state.input.anykey = btn_down;
+                break;
+            case SAPP_KEYCODE_ESCAPE:
+                state.input.esc = state.input.anykey = btn_down;
+                break;
+            default:
+                state.input.anykey = btn_down;
+                break;
+            }
+        }
+    }
+}
+
+
+
+
 
 static void cleanup(void) {
     snd_shutdown();
@@ -1497,12 +1527,21 @@ static void game_round_init(void) {
     start(&state.game.force_leave_house);
 
     // Pacman starts running to the left
-    state.game.pacman = (pacman_t) {
+    state.game.pacman1 = (pacman_t) {
         .actor = {
             .dir = DIR_LEFT,
             .pos = { 14*8, 26*8+4 },
         },
     };
+
+    state.game.pacman2 = (pacman_t){
+        .actor = {
+            .dir = DIR_LEFT,
+            .pos = { 14 * 8, 26 * 8 + 4 },
+        },
+    };
+
+
     state.gfx.sprite[SPRITE_PACMAN] = (sprite_t) { .enabled = true, .color = COLOR_PACMAN };
 
     // Blinky starts outside the ghost house, looking to the left, and in scatter mode
@@ -1633,8 +1672,10 @@ static void game_update_sprites(void) {
     {
         sprite_t* spr = spr_pacman();
         if (spr->enabled) {
-            const actor_t* actor = &state.game.pacman.actor;
-            spr->pos = actor_to_sprite_pos(actor->pos);
+            const actor_t* actor1 = &state.game.pacman1.actor;
+            const actor_t* actor2 = &state.game.pacman2.actor;
+
+            spr->pos = actor_to_sprite_pos(actor1->pos);
             if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
                 // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
                 spr->tile = SPRITETILE_INVISIBLE;
@@ -1651,8 +1692,30 @@ static void game_update_sprites(void) {
             }
             else {
                 // regular Pacman animation
-                spr_anim_pacman(actor->dir, actor->anim_tick);
+                spr_anim_pacman(actor1->dir, actor1->anim_tick);
             }
+
+
+            spr->pos = actor_to_sprite_pos(actor2->pos);
+            if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
+                // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
+                spr->tile = SPRITETILE_INVISIBLE;
+            }
+            else if (state.game.freeze & (FREEZETYPE_PRELUDE | FREEZETYPE_READY)) {
+                // special case game frozen at start of round, show Pacman with 'closed mouth'
+                spr->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+            }
+            else if (state.game.freeze & FREEZETYPE_DEAD) {
+                // play the Pacman-death-animation after a short pause
+                if (after(state.game.pacman_eaten, PACMAN_EATEN_TICKS)) {
+                    spr_anim_pacman_death(since(state.game.pacman_eaten) - PACMAN_EATEN_TICKS);
+                }
+            }
+            else {
+                // regular Pacman animation
+                spr_anim_pacman(actor2->dir, actor2->anim_tick);
+            }
+
         }
     }
 
@@ -1889,25 +1952,35 @@ static void game_update_ghost_target(ghost_t* ghost) {
             // when in chase mode, each ghost has its own particular
             // chase behaviour (see the Pacman Dossier for details)
             {
-                const actor_t* pm = &state.game.pacman.actor;
-                const int2_t pm_pos = pixel_to_tile_pos(pm->pos);
-                const int2_t pm_dir = dir_to_vec(pm->dir);
+                const actor_t* pm1 = &state.game.pacman1.actor;
+                const int2_t pm1_pos = pixel_to_tile_pos(pm1->pos);
+                const int2_t pm1_dir = dir_to_vec(pm1->dir);
+
+                const actor_t* pm2 = &state.game.pacman2.actor;
+                const int2_t pm2_pos = pixel_to_tile_pos(pm2->pos);
+                const int2_t pm2_dir = dir_to_vec(pm2->dir);
+
                 switch (ghost->type) {
                     case GHOSTTYPE_BLINKY:
                         // Blinky directly chases Pacman
-                        pos = pm_pos;
+                        pos = pm1_pos;
+                        pos = pm2_pos;
+
                         break;
                     case GHOSTTYPE_PINKY:
                         // Pinky target is 4 tiles ahead of Pacman
                         // FIXME: does not reproduce 'diagonal overflow'
-                        pos = add_i2(pm_pos, mul_i2(pm_dir, 4));
+                        pos = add_i2(pm1_pos, mul_i2(pm1_dir, 4));
+                        pos = add_i2(pm2_pos, mul_i2(pm2_dir, 4));
+
                         break;
                     case GHOSTTYPE_INKY:
                         // Inky targets an extrapolated pos along a line two tiles
                         // ahead of Pacman through Blinky
                         {
                             const int2_t blinky_pos = pixel_to_tile_pos(state.game.ghost[GHOSTTYPE_BLINKY].actor.pos);
-                            const int2_t p = add_i2(pm_pos, mul_i2(pm_dir, 2));
+                            const int2_t p = add_i2(pm1_pos, mul_i2(pm1_dir, 2));
+
                             const int2_t d = sub_i2(p, blinky_pos);
                             pos = add_i2(blinky_pos, mul_i2(d, 2));
                         }
@@ -1915,8 +1988,11 @@ static void game_update_ghost_target(ghost_t* ghost) {
                     case GHOSTTYPE_CLYDE:
                         // if Clyde is far away from Pacman, he chases Pacman,
                         // but if close he moves towards the scatter target
-                        if (squared_distance_i2(pixel_to_tile_pos(ghost->actor.pos), pm_pos) > 64) {
-                            pos = pm_pos;
+                        if (squared_distance_i2(pixel_to_tile_pos(ghost->actor.pos), pm1_pos) > 64) {
+                            pos = pm1_pos;
+                        }
+                        else if (squared_distance_i2(pixel_to_tile_pos(ghost->actor.pos), pm2_pos) > 64) {
+                            pos = pm2_pos;
                         }
                         else {
                             pos = ghost_scatter_targets[GHOSTTYPE_CLYDE];
@@ -2104,20 +2180,20 @@ static void game_update_actors(void) {
     // Pacman "AI"
     if (game_pacman_should_move()) {
         // move Pacman with cornering allowed
-        actor_t* actor = &state.game.pacman.actor;
-        const dir_t wanted_dir = input_dir(actor->dir);
+        actor_t* actor1 = &state.game.pacman1.actor;
+        const dir_t wanted_dir = input_dir(actor1->dir);
         const bool allow_cornering = true;
         // look ahead to check if the wanted direction is blocked
-        if (can_move(actor->pos, wanted_dir, allow_cornering)) {
-            actor->dir = wanted_dir;
+        if (can_move(actor1->pos, wanted_dir, allow_cornering)) {
+            actor1->dir = wanted_dir;
         }
         // move into the selected direction
-        if (can_move(actor->pos, actor->dir, allow_cornering)) {
-            actor->pos = move(actor->pos, actor->dir, allow_cornering);
-            actor->anim_tick++;
+        if (can_move(actor1->pos, actor1->dir, allow_cornering)) {
+            actor1->pos = move(actor1->pos, actor1->dir, allow_cornering);
+            actor1->anim_tick++;
         }
         // eat dot or energizer pill?
-        const int2_t tile_pos = pixel_to_tile_pos(actor->pos);
+        const int2_t tile_pos = pixel_to_tile_pos(actor1->pos);
         if (is_dot(tile_pos)) {
             vid_tile(tile_pos, TILE_SPACE);
             state.game.score += 1;
@@ -2139,7 +2215,7 @@ static void game_update_actors(void) {
         }
         // check if Pacman eats the bonus fruit
         if (state.game.active_fruit != FRUIT_NONE) {
-            const int2_t test_pos = pixel_to_tile_pos(add_i2(actor->pos, i2(TILE_WIDTH/2, 0)));
+            const int2_t test_pos = pixel_to_tile_pos(add_i2(actor1->pos, i2(TILE_WIDTH/2, 0)));
             if (equal_i2(test_pos, i2(14, 20))) {
                 start(&state.game.fruit_eaten);
                 uint32_t score = levelspec(state.game.round).bonus_score;
@@ -2179,6 +2255,89 @@ static void game_update_actors(void) {
                         start_after(&state.game.game_over, PACMAN_EATEN_TICKS+PACMAN_DEATH_TICKS);
                     }
                     #endif
+                }
+            }
+        }
+    }
+
+
+    if (game_pacman_should_move()) {
+        // move Pacman with cornering allowed
+        actor_t* actor2 = &state.game.pacman2.actor;
+        const dir_t wanted_dir = input_dir(actor2->dir);
+        const bool allow_cornering = true;
+        // look ahead to check if the wanted direction is blocked
+        if (can_move(actor2->pos, wanted_dir, allow_cornering)) {
+            actor2->dir = wanted_dir;
+        }
+        // move into the selected direction
+        if (can_move(actor2->pos, actor2->dir, allow_cornering)) {
+            actor2->pos = move(actor2->pos, actor2->dir, allow_cornering);
+            actor2->anim_tick++;
+        }
+        // eat dot or energizer pill?
+        const int2_t tile_pos = pixel_to_tile_pos(actor2->pos);
+        if (is_dot(tile_pos)) {
+            vid_tile(tile_pos, TILE_SPACE);
+            state.game.score += 1;
+            start(&state.game.dot_eaten);
+            start(&state.game.force_leave_house);
+            game_update_dots_eaten();
+            game_update_ghosthouse_dot_counters();
+        }
+        if (is_pill(tile_pos)) {
+            vid_tile(tile_pos, TILE_SPACE);
+            state.game.score += 5;
+            game_update_dots_eaten();
+            start(&state.game.pill_eaten);
+            state.game.num_ghosts_eaten = 0;
+            for (int i = 0; i < NUM_GHOSTS; i++) {
+                start(&state.game.ghost[i].frightened);
+            }
+            snd_start(1, &snd_frightened);
+        }
+        // check if Pacman eats the bonus fruit
+        if (state.game.active_fruit != FRUIT_NONE) {
+            const int2_t test_pos = pixel_to_tile_pos(add_i2(actor2->pos, i2(TILE_WIDTH / 2, 0)));
+            if (equal_i2(test_pos, i2(14, 20))) {
+                start(&state.game.fruit_eaten);
+                uint32_t score = levelspec(state.game.round).bonus_score;
+                state.game.score += score;
+                vid_fruit_score(state.game.active_fruit);
+                state.game.active_fruit = FRUIT_NONE;
+                snd_start(2, &snd_eatfruit);
+            }
+        }
+        // check if Pacman collides with any ghost
+        for (int i = 0; i < NUM_GHOSTS; i++) {
+            ghost_t* ghost = &state.game.ghost[i];
+            const int2_t ghost_tile_pos = pixel_to_tile_pos(ghost->actor.pos);
+            if (equal_i2(tile_pos, ghost_tile_pos)) {
+                if (ghost->state == GHOSTSTATE_FRIGHTENED) {
+                    // Pacman eats a frightened ghost
+                    ghost->state = GHOSTSTATE_EYES;
+                    start(&ghost->eaten);
+                    start(&state.game.ghost_eaten);
+                    state.game.num_ghosts_eaten++;
+                    // increase score by 20, 40, 80, 160
+                    state.game.score += 10 * (1 << state.game.num_ghosts_eaten);
+                    state.game.freeze |= FREEZETYPE_EAT_GHOST;
+                    snd_start(2, &snd_eatghost);
+                }
+                else if ((ghost->state == GHOSTSTATE_CHASE) || (ghost->state == GHOSTSTATE_SCATTER)) {
+                    // otherwise, ghost eats Pacman, Pacman loses a life
+#if !DBG_GODMODE
+                    snd_clear();
+                    start(&state.game.pacman_eaten);
+                    state.game.freeze |= FREEZETYPE_DEAD;
+                    // if Pacman has any lives left start a new round, otherwise start the game-over sequence
+                    if (state.game.num_lives > 0) {
+                        start_after(&state.game.ready_started, PACMAN_EATEN_TICKS + PACMAN_DEATH_TICKS);
+                    }
+                    else {
+                        start_after(&state.game.game_over, PACMAN_EATEN_TICKS + PACMAN_DEATH_TICKS);
+                    }
+#endif
                 }
             }
         }
