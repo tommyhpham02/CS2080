@@ -2505,7 +2505,7 @@ static void intro_tick(void) {
     // draw the animated 'ghost image.. name.. nickname' lines
     uint32_t delay = 30;
     //const char* names[] = { "-SHADOW", "-SPEEDY", "-BASHFUL", "-POKEY" };
-    const char* names[] = { "-TOMMY", "-TIMMY", "-TAMMY", "-BOB" };
+    const char* names[] = { "-TOMMY", "-AUTUMN", "-MIKE", "-UNIX" };
     const char* nicknames[] = { "BLINKY", "PINKY", "INKY", "CLYDE" };
     for (int i = 0; i < 4; i++) {
         const uint8_t color = 2*i + 1;
