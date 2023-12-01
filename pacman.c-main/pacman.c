@@ -154,8 +154,8 @@
 #define DBG_SKIP_PRELUDE    (0)     // set to (1) to skip game prelude
 #define DBG_START_ROUND     (0)     // set to any starting round <=255
 #define DBG_MARKERS         (0)     // set to (1) to show debug markers
-#define DBG_ESCAPE          (0)     // set to (1) to leave game loop with Esc
-#define DBG_DOUBLE_SPEED    (0)     // set to (1) to speed up game (useful with godmode)
+#define DBG_ESCAPE          (1)     // set to (1) to leave game loop with Esc
+#define DBG_DOUBLE_SPEED    (1)     // set to (1) to speed up game (useful with godmode)
 #define DBG_GODMODE         (1)     // set to (1) to disable dying
 
 // NOTE: DO NOT CHANGE THESE DEFINES TO AN ENUM
@@ -187,7 +187,7 @@
 #define TILE_TEXTURE_HEIGHT  (TILE_HEIGHT + SPRITE_HEIGHT)
 #define MAX_VERTICES         (((DISPLAY_TILES_X * DISPLAY_TILES_Y) + NUM_SPRITES + NUM_DEBUG_MARKERS) * 6)
 #define FADE_TICKS           (30)   // duration of fade-in/out
-#define NUM_LIVES            (3)
+#define NUM_LIVES            (6)
 #define NUM_STATUS_FRUITS    (7)    // max number of displayed fruits at bottom right
 #define NUM_DOTS             (244)  // 240 small dots + 4 pills
 #define NUM_PILLS            (4)    // number of energizer pills on playfield
@@ -1149,6 +1149,7 @@ static void vid_fruit_score(fruit_t fruit_type) {
     uint8_t color_code = (fruit_type == FRUIT_NONE) ? COLOR_DOT : COLOR_FRUIT_SCORE;
     for (int i = 0; i < 4; i++) {
         vid_color_tile(i2(12+i, 20), color_code, fruit_score_tiles[fruit_type][i]);
+        
     }
 }
 
@@ -2223,6 +2224,7 @@ static void game_update_actors(void) {
                 vid_fruit_score(state.game.active_fruit);
                 state.game.active_fruit = FRUIT_NONE;
                 snd_start(2, &snd_eatfruit);
+                
             }
         }
         // check if Pacman collides with any ghost
