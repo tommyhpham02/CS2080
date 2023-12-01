@@ -156,7 +156,7 @@
 #define DBG_MARKERS         (0)     // set to (1) to show debug markers
 #define DBG_ESCAPE          (1)     // set to (1) to leave game loop with Esc
 #define DBG_DOUBLE_SPEED    (0)     // set to (1) to speed up game (useful with godmode)
-#define DBG_GODMODE         (0)     // set to (1) to disable dying
+#define DBG_GODMODE         (1)     // set to (1) to disable dying
 
 // NOTE: DO NOT CHANGE THESE DEFINES TO AN ENUM
 // gcc-13 will turn the backing type into an unsigned integer which then
@@ -724,7 +724,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input1,
         .width = DISPLAY_TILES_X * TILE_WIDTH * 2,
         .height = DISPLAY_TILES_Y * TILE_HEIGHT * 2,
-        .window_title = "pacman.c",
+        .window_title = "Team-3_Pacman.c",
         .logger.func = slog_func,
     };
 }
@@ -2224,6 +2224,14 @@ static void game_update_actors(void) {
                 vid_fruit_score(state.game.active_fruit);
                 state.game.active_fruit = FRUIT_NONE;
                 snd_start(2, &snd_eatfruit);
+                //Added by Tommy Pham
+                start(&state.game.pill_eaten);
+                state.game.num_ghosts_eaten = 0;
+                for (int i = 0; i < NUM_GHOSTS; i++) {
+                    start(&state.game.ghost[i].frightened);
+
+                }
+                snd_start(1, &snd_frightened);
                 
             }
         }
