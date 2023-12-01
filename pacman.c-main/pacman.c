@@ -155,8 +155,8 @@
 #define DBG_START_ROUND     (0)     // set to any starting round <=255
 #define DBG_MARKERS         (0)     // set to (1) to show debug markers
 #define DBG_ESCAPE          (1)     // set to (1) to leave game loop with Esc
-#define DBG_DOUBLE_SPEED    (1)     // set to (1) to speed up game (useful with godmode)
-#define DBG_GODMODE         (1)     // set to (1) to disable dying
+#define DBG_DOUBLE_SPEED    (0)     // set to (1) to speed up game (useful with godmode)
+#define DBG_GODMODE         (0)     // set to (1) to disable dying
 
 // NOTE: DO NOT CHANGE THESE DEFINES TO AN ENUM
 // gcc-13 will turn the backing type into an unsigned integer which then
