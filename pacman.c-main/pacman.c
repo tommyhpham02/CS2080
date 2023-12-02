@@ -156,7 +156,7 @@
 #define DBG_MARKERS         (0)     // set to (1) to show debug markers
 #define DBG_ESCAPE          (1)     // set to (1) to leave game loop with Esc
 #define DBG_DOUBLE_SPEED    (0)     // set to (1) to speed up game (useful with godmode)
-#define DBG_GODMODE         (1)     // set to (1) to disable dying
+#define DBG_GODMODE         (0)     // set to (1) to disable dying
 
 // NOTE: DO NOT CHANGE THESE DEFINES TO AN ENUM
 // gcc-13 will turn the backing type into an unsigned integer which then
@@ -467,6 +467,7 @@ static struct {
         ghost_t ghost[NUM_GHOSTS];
         pacman_t pacman1;
         pacman_t pacman2;
+        bool player2;
         fruit_t active_fruit;
     } game;
 
@@ -479,7 +480,18 @@ static struct {
         bool right;
         bool esc;       // only for debugging (see DBG_ESCACPE)
         bool anykey;
-    } input;
+    } input1;
+
+    struct {
+        bool enabled;
+        bool up;
+        bool down;
+        bool left;
+        bool right;
+        bool esc;       // only for debugging (see DBG_ESCACPE)
+        bool anykey;
+    } input2;
+
 
     // the audio subsystem is essentially a Namco arcade board sound emulator
     struct {
@@ -681,7 +693,7 @@ static const sound_desc_t snd_frightened = {
 static void init(void);
 static void frame(void);
 static void cleanup(void);
-static void input1(const sapp_event*);
+static void input(const sapp_event*);
 static void input2(const sapp_event*);
 
 
@@ -721,7 +733,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = input1,
+        .event_cb = input,
         .width = DISPLAY_TILES_X * TILE_WIDTH * 2,
         .height = DISPLAY_TILES_Y * TILE_HEIGHT * 2,
         .window_title = "Team-3_Pacman.c",
@@ -779,60 +791,67 @@ static void frame(void) {
     snd_frame(frame_time_ns);
 }
 
-static void input1(const sapp_event* ev) {
-    if (state.input.enabled) {
+static void input(const sapp_event* ev) {
+    if (state.input1.enabled) {
         if ((ev->type == SAPP_EVENTTYPE_KEY_DOWN) || (ev->type == SAPP_EVENTTYPE_KEY_UP)) {
             bool btn_down = ev->type == SAPP_EVENTTYPE_KEY_DOWN;
             switch (ev->key_code) {
                 case SAPP_KEYCODE_UP:
-                    state.input.up = state.input.anykey = btn_down;
+                    state.input1.up = state.input1.anykey = btn_down;
+                    state.game.player2 = false;
                     break;
                 case SAPP_KEYCODE_DOWN:
-                    state.input.down = state.input.anykey = btn_down;
+                    state.input1.down = state.input1.anykey = btn_down;
+                    state.game.player2 = false;
                     break;
                 case SAPP_KEYCODE_LEFT:
-                    state.input.left = state.input.anykey = btn_down;
+                    state.input1.left = state.input1.anykey = btn_down;
+                    state.game.player2 = false;
                     break;
                 case SAPP_KEYCODE_RIGHT:
-                    state.input.right = state.input.anykey = btn_down;
+                    state.input1.right = state.input1.anykey = btn_down;
+                    state.game.player2 = false;
                     break;
                 case SAPP_KEYCODE_ESCAPE:
-                    state.input.esc = state.input.anykey = btn_down;
+                    state.input1.esc = state.input1.anykey = btn_down;
                     break;
+
+
+                case SAPP_KEYCODE_W:
+                    state.input2.up = state.input2.anykey = btn_down;
+                    state.game.player2 = true;
+                    break;
+                case SAPP_KEYCODE_S:
+                    state.input2.down = state.input2.anykey = btn_down;
+                    state.game.player2 = true;
+
+                    break;
+                case SAPP_KEYCODE_A:
+                    state.input2.left = state.input2.anykey = btn_down;
+                    state.game.player2 = true;
+
+                    break;
+                case SAPP_KEYCODE_D:
+                    state.input2.right = state.input2.anykey = btn_down;
+                    state.game.player2 = true;
+
+                    break;
+
+
+
+
+
+
+
                 default:
-                    state.input.anykey = btn_down;
+                    state.input1.anykey = btn_down;
+                    state.input2.anykey = btn_down;
                     break;
             }
         }
     }
 }
-static void input2(const sapp_event* ev) {
-    if (state.input.enabled) {
-        if ((ev->type == SAPP_EVENTTYPE_KEY_DOWN) || (ev->type == SAPP_EVENTTYPE_KEY_UP)) {
-            bool btn_down = ev->type == SAPP_EVENTTYPE_KEY_DOWN;
-            switch (ev->key_code) {
-            case SAPP_KEYCODE_W:
-                state.input.up = state.input.anykey = btn_down;
-                break;
-            case SAPP_KEYCODE_S:
-                state.input.down = state.input.anykey = btn_down;
-                break;
-            case SAPP_KEYCODE_A:
-                state.input.left = state.input.anykey = btn_down;
-                break;
-            case SAPP_KEYCODE_D:
-                state.input.right = state.input.anykey = btn_down;
-                break;
-            case SAPP_KEYCODE_ESCAPE:
-                state.input.esc = state.input.anykey = btn_down;
-                break;
-            default:
-                state.input.anykey = btn_down;
-                break;
-            }
-        }
-    }
-}
+
 
 
 
@@ -938,26 +957,40 @@ static bool before(trigger_t t, uint32_t ticks) {
 
 // clear input state and disable input
 static void input_disable(void) {
-    memset(&state.input, 0, sizeof(state.input));
+    memset(&state.input1, 0, sizeof(state.input1));
+    memset(&state.input2, 0, sizeof(state.input2));
 }
 
 // enable input again
 static void input_enable(void) {
-    state.input.enabled = true;
+    state.input1.enabled = true;
+    state.input2.enabled = true;
 }
 
 // get the current input as dir_t
 static dir_t input_dir(dir_t default_dir) {
-    if (state.input.up) {
+    if (state.input1.up) {
         return DIR_UP;
     }
-    else if (state.input.down) {
+    else if (state.input1.down) {
         return DIR_DOWN;
     }
-    else if (state.input.right) {
+    else if (state.input1.right) {
         return DIR_RIGHT;
     }
-    else if (state.input.left) {
+    else if (state.input1.left) {
+        return DIR_LEFT;
+    }
+    else if (state.input2.up) {
+        return DIR_UP;
+    }
+    else if (state.input2.down) {
+        return DIR_DOWN;
+    }
+    else if (state.input2.right) {
+        return DIR_RIGHT;
+    }
+    else if (state.input2.left) {
         return DIR_LEFT;
     }
     else {
@@ -1537,7 +1570,7 @@ static void game_round_init(void) {
 
     state.game.pacman2 = (pacman_t){
         .actor = {
-            .dir = DIR_LEFT,
+            .dir = DIR_RIGHT,
             .pos = { 14 * 8, 26 * 8 + 4 },
         },
     };
@@ -1671,19 +1704,26 @@ static void game_update_tiles(void) {
 static void game_update_sprites(void) {
     // update Pacman sprite
     {
-        sprite_t* spr = spr_pacman();
-        if (spr->enabled) {
+        sprite_t* spr1 = spr_pacman();
+        sprite_t* spr2 = spr_pacman();
+
+        if (spr1->enabled) {
             const actor_t* actor1 = &state.game.pacman1.actor;
             const actor_t* actor2 = &state.game.pacman2.actor;
 
-            spr->pos = actor_to_sprite_pos(actor1->pos);
+            spr1->pos = actor_to_sprite_pos(actor1->pos);
+            spr2->pos = actor_to_sprite_pos(actor2->pos);
             if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
                 // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
-                spr->tile = SPRITETILE_INVISIBLE;
+                spr1->tile = SPRITETILE_INVISIBLE;
+                spr2->tile = SPRITETILE_INVISIBLE;
+
             }
             else if (state.game.freeze & (FREEZETYPE_PRELUDE|FREEZETYPE_READY)) {
                 // special case game frozen at start of round, show Pacman with 'closed mouth'
-                spr->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                spr1->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                spr2->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+
             }
             else if (state.game.freeze & FREEZETYPE_DEAD) {
                 // play the Pacman-death-animation after a short pause
@@ -1694,27 +1734,8 @@ static void game_update_sprites(void) {
             else {
                 // regular Pacman animation
                 spr_anim_pacman(actor1->dir, actor1->anim_tick);
-            }
-
-
-            spr->pos = actor_to_sprite_pos(actor2->pos);
-            if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
-                // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
-                spr->tile = SPRITETILE_INVISIBLE;
-            }
-            else if (state.game.freeze & (FREEZETYPE_PRELUDE | FREEZETYPE_READY)) {
-                // special case game frozen at start of round, show Pacman with 'closed mouth'
-                spr->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
-            }
-            else if (state.game.freeze & FREEZETYPE_DEAD) {
-                // play the Pacman-death-animation after a short pause
-                if (after(state.game.pacman_eaten, PACMAN_EATEN_TICKS)) {
-                    spr_anim_pacman_death(since(state.game.pacman_eaten) - PACMAN_EATEN_TICKS);
-                }
-            }
-            else {
-                // regular Pacman animation
                 spr_anim_pacman(actor2->dir, actor2->anim_tick);
+
             }
 
         }
@@ -2179,7 +2200,7 @@ static void game_update_dots_eaten(void) {
 // the central Pacman and ghost behaviour function, called once per game tick
 static void game_update_actors(void) {
     // Pacman "AI"
-    if (game_pacman_should_move()) {
+    if (game_pacman_should_move() && state.game.player2) {
         // move Pacman with cornering allowed
         actor_t* actor1 = &state.game.pacman1.actor;
         const dir_t wanted_dir = input_dir(actor1->dir);
@@ -2271,7 +2292,7 @@ static void game_update_actors(void) {
     }
 
 
-    if (game_pacman_should_move()) {
+    if (game_pacman_should_move() && !state.game.player2) {
         // move Pacman with cornering allowed
         actor_t* actor2 = &state.game.pacman2.actor;
         const dir_t wanted_dir = input_dir(actor2->dir);
@@ -2455,7 +2476,7 @@ static void game_tick(void) {
     }
 
     #if DBG_ESCAPE
-        if (state.input.esc) {
+        if (state.input1.esc) {
             input_disable();
             start(&state.gfx.fadeout);
             start_after(&state.intro.started, FADE_TICKS);
@@ -2553,7 +2574,7 @@ static void intro_tick(void) {
     // FIXME: animated chase sequence
 
     // if a key is pressed, advance to game state
-    if (state.input.anykey) {
+    if (state.input1.anykey) {
         input_disable();
         start(&state.gfx.fadeout);
         start_after(&state.game.started, FADE_TICKS);
