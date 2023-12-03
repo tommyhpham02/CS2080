@@ -1711,18 +1711,35 @@ static void game_update_sprites(void) {
             const actor_t* actor1 = &state.game.pacman1.actor;
             const actor_t* actor2 = &state.game.pacman2.actor;
 
-            spr1->pos = actor_to_sprite_pos(actor1->pos);
-            spr2->pos = actor_to_sprite_pos(actor2->pos);
+            /*
+
+
+            if (state.game.player2) {
+                spr1->pos = actor_to_sprite_pos(actor1->pos);
+            }
+            else {
+                spr2->pos = actor_to_sprite_pos(actor2->pos);
+            }
+
             if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
                 // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
+
                 spr1->tile = SPRITETILE_INVISIBLE;
                 spr2->tile = SPRITETILE_INVISIBLE;
 
             }
             else if (state.game.freeze & (FREEZETYPE_PRELUDE|FREEZETYPE_READY)) {
                 // special case game frozen at start of round, show Pacman with 'closed mouth'
-                spr1->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
-                spr2->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                if (state.game.player2) {
+                    spr1->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                }
+                else {
+                    spr2->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                }
+
+
+                //spr1->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                //spr2->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
 
             }
             else if (state.game.freeze & FREEZETYPE_DEAD) {
@@ -1733,10 +1750,79 @@ static void game_update_sprites(void) {
             }
             else {
                 // regular Pacman animation
-                spr_anim_pacman(actor1->dir, actor1->anim_tick);
-                spr_anim_pacman(actor2->dir, actor2->anim_tick);
+                if (state.game.player2) {
+                    spr_anim_pacman(actor2->dir, actor2->anim_tick);
+
+                }
+                else {
+                    spr_anim_pacman(actor1->dir, actor1->anim_tick);
+
+                }
+                //spr_anim_pacman(actor1->dir, actor1->anim_tick);
+                //spr_anim_pacman(actor2->dir, actor2->anim_tick);
 
             }
+
+*/
+
+
+
+            if (state.game.player2) {
+                spr1->pos = actor_to_sprite_pos(actor1->pos);
+                if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
+                    // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
+
+                    spr1->tile = SPRITETILE_INVISIBLE;
+                }
+                else if (state.game.freeze & (FREEZETYPE_PRELUDE | FREEZETYPE_READY)) {
+                    spr1->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                }
+                else if (state.game.freeze & FREEZETYPE_DEAD) {
+                    // play the Pacman-death-animation after a short pause
+                    if (after(state.game.pacman_eaten, PACMAN_EATEN_TICKS)) {
+                        spr_anim_pacman_death(since(state.game.pacman_eaten) - PACMAN_EATEN_TICKS);
+                    }
+                }
+                else {
+                    spr_anim_pacman(actor1->dir, actor1->anim_tick);
+                }
+            }
+            else {
+                spr2->pos = actor_to_sprite_pos(actor2->pos);
+                if (state.game.freeze & FREEZETYPE_EAT_GHOST) {
+                    // hide Pacman shortly after he's eaten a ghost (via an invisible Sprite tile)
+
+                    spr2->tile = SPRITETILE_INVISIBLE;
+                }
+                else if (state.game.freeze & (FREEZETYPE_PRELUDE | FREEZETYPE_READY)) {
+                    spr2->tile = SPRITETILE_PACMAN_CLOSED_MOUTH;
+                }
+                else if (state.game.freeze & FREEZETYPE_DEAD) {
+                    // play the Pacman-death-animation after a short pause
+                    if (after(state.game.pacman_eaten, PACMAN_EATEN_TICKS)) {
+                        spr_anim_pacman_death(since(state.game.pacman_eaten) - PACMAN_EATEN_TICKS);
+                    }
+                }
+                else {
+                    spr_anim_pacman(actor2->dir, actor2->anim_tick);
+                }
+            }
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         }
     }
