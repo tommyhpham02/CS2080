@@ -1,0 +1,12 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "pacman.c-main\\CMakeLists.txt",
+      "projectTarget": "pacman.exe",
+      "name": "pacman.exe"
+    }
+  ]
+}
