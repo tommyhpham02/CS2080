@@ -480,6 +480,7 @@ static struct {
         bool right;
         bool esc;       // only for debugging (see DBG_ESCACPE)
         bool anykey;
+        bool l;
     } input1;
 
     struct {
@@ -490,6 +491,7 @@ static struct {
         bool right;
         bool esc;       // only for debugging (see DBG_ESCACPE)
         bool anykey;
+        bool l;
     } input2;
 
 
@@ -838,7 +840,10 @@ static void input(const sapp_event* ev) {
                     break;
 
 
-
+                case SAPP_KEYCODE_L:
+                    state.input1.l = btn_down;
+                    state.input1.l = btn_down;
+                    break;
 
 
 
@@ -1516,6 +1521,7 @@ static void game_init(void) {
     vid_color_text(i2(9,0), COLOR_DEFAULT, "HIGH SCORE");
     game_init_playfield();
     vid_color_text(i2(9,14), 0x5, "PLAYER ONE");
+    vid_color_text(i2(9,16), 0x5, "PLAYER TWO");
     vid_color_text(i2(11, 20), 0x9, "READY!");
 }
 
@@ -1525,6 +1531,7 @@ static void game_round_init(void) {
 
     // clear the "PLAYER ONE" text
     vid_color_text(i2(9,14), 0x10, "          ");
+    vid_color_text(i2(9,16), 0x10, "          ");
 
     /* if a new round was started because Pacman has "won" (eaten all dots),
         redraw the playfield and reset the global dot counter
@@ -2644,6 +2651,8 @@ static void intro_tick(void) {
         vid_text(i2(12,24), "10 \x5D\x5E\x5F");
         vid_color_tile(i2(10,26), COLOR_DOT, TILE_PILL);
         vid_text(i2(12,26), "50 \x5D\x5E\x5F");
+
+        vid_color_text(i2(1, 29), 3, "PRESS L TO LEARN THE RULES");
     }
 
     // blinking "press any key" text
@@ -2665,6 +2674,27 @@ static void intro_tick(void) {
         start(&state.gfx.fadeout);
         start_after(&state.game.started, FADE_TICKS);
     }
+
+    if (state.input1.l) {
+        vid_color_text(i2(3, 5), 3, "RULES AN ADDED FEATURES");
+
+        for (int i = 0; i <= 30; i++) {
+            vid_color_text(i2(1, i), 4, "                              ");
+        }
+        vid_color_text(i2(0, 7), 3, "THIS UPDATE HAS A MULTLI-");
+        vid_color_text(i2(0, 9), 3, "PLAYER FEATURE WHERE ONE");
+        vid_color_text(i2(0, 11), 3, "PLAYER USES THE ARROW KEYS");
+        vid_color_text(i2(0, 13), 3, "AND THE OTHER USES TEH WASD");
+        vid_color_text(i2(0, 15), 3, "KEYS! THERE ARE ALSO POWER-");
+        vid_color_text(i2(0, 17), 3, "UPS SO THE PLAYER USING THE");
+        vid_color_text(i2(0, 19), 3, "WASD KEYS GETS THE FRUIT");
+        vid_color_text(i2(0, 21), 3, "BONUS POWERUP WHILE THE");
+        vid_color_text(i2(0, 23), 3, "PLAYER WITH THE ARROW KEYS");
+        vid_color_text(i2(0, 25), 3, "GETS THE REGULAR FRUITS");
+        vid_color_text(i2(0, 27), 3, "POWERUP! THE ESC KEY EXITS");
+        vid_color_text(i2(0, 29), 3, "THE GAME");
+    }
+
 }
 
 /*== GFX SUBSYSTEM ===========================================================*/
